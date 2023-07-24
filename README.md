@@ -1,7 +1,13 @@
+REUPLOAD OF PROJECT
+Original repository was owned by my univeristy and could not be forked. I have copied all the files here.
+the project was from August 2021.
+
+original repository: [https://github.com/MAST30034-2021-S2/mast30034_2021_s2_project_1-Andre-Medina](https://github.com/MAST30034-2021-S2/mast30034_2021_s2_project_1-Andre-Medina)
+
 # MAST30034 Project 1 - Quantitative Analysis
 - Student Name: Andre Medina
 - Student ID: 908155
-- Due Date: Thursday 18th of August 11:59:00 am (AEST).
+- Due Date: Thursday 18th of August 11:59:00 am (AEST) 2021.
 
 # Dependencies
 - Language: Python 3.8.3 and R 4.05
