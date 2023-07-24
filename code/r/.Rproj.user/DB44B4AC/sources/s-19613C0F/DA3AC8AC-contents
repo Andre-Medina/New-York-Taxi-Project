@@ -1,0 +1,213 @@
+---
+title: "Challenger disaster"
+author: "Heejung Shim"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# install.package faraway
+```{r}
+#install.packages("faraway")
+```
+
+# load and plot data
+```{r}
+library(faraway)
+data(orings)
+str(orings)
+plot(damage/6 ~ temp, orings, xlim=c(25,85), ylim=c(0,1),
+     xlab="Temperature", ylab="Prob of damage")
+```
+
+# logistic function with different values for beta0 and beta1
+```{r}
+try <- function(a, b, col = "red") {
+  t <- seq(25, 85, 1)
+  p <- 1/(1 + exp(-a - b*t))
+  lines(t, p, col = col)
+}
+plot(damage/6 ~ temp, orings, xlim=c(25,85), ylim=c(0,1),
+     xlab="Temperature", ylab="Prob of damage")
+try(11, -0.2, col="red")
+## Compared to red curve: same location, stronger steepness
+try(22, -0.4, col="blue")
+## Compared to red curve: shifted location, same steepness
+try(9, -0.2, col="darkgreen")
+```
+
+# maximum likelihood fitting
+
+Define the log likelihood
+```{r}
+logL <- function(beta, orings) {
+  eta <- cbind(1, orings$temp) %*% beta
+  return( sum( orings$damage*eta - 6*log(1 + exp(eta)) ) )
+}
+```
+
+Find MLE using optim function 
+```{r}
+(betahat <- optim(c(10, -.1), logL, orings=orings, control=list(fnscale=-1))$par)
+```
+
+plot fitted model
+```{r}
+plot(damage/6 ~ temp, orings, xlim=c(25,85), ylim=c(0,1),
+     xlab="Temperature", ylab="Prob of damage")
+x <- seq(25,85,1)
+ilogit <- function(x) exp(x)/(1+exp(x))
+lines(x, ilogit(betahat[1] + betahat[2]*x), col="red")
+```
+
+# prediction for temp of 29
+```{r}
+ilogit (betahat[1] + betahat[2]*29)
+```
+
+Using the glm command instead
+```{r}
+logitmod <- glm(cbind(damage,6-damage) ~ temp, family=binomial, orings)
+summary(logitmod)
+predict(logitmod, newdata=list(temp=29), type="response")
+```
+
+# Confidence Interval for p
+
+Compute standard errors
+```{r}
+phat <- ilogit(betahat[1] + orings$temp*betahat[2])
+I11 <- sum(6*phat*(1 - phat))
+I12 <- sum(6*orings$temp*phat*(1 - phat))
+I22 <- sum(6*orings$temp^2*phat*(1 - phat))
+Iinv <- solve(matrix(c(I11, I12, I12, I22), 2, 2))
+sqrt(Iinv[1,1])
+sqrt(Iinv[2,2])
+```
+
+Compute CI for eta = beta0 + beta1 29
+```{r}
+si2 <- matrix(c(1, 29), 1, 2) %*% Iinv %*% matrix(c(1, 29), 2, 1)
+etahat = betahat[1] + betahat[2]*29
+eta_l = etahat - 2*sqrt(si2)
+eta_r = etahat + 2*sqrt(si2)
+etahat
+c(eta_l, eta_r)
+```
+
+Compute CI for p 
+```{r}
+ilogit (etahat)
+c(ilogit (eta_l), ilogit (eta_r))
+```
+
+# Wald Test 
+Compute MLE
+```{r}
+library(faraway)
+data(orings)
+logL <- function(beta, orings) {
+  eta <- cbind(1, orings$temp) %*% beta
+  return( sum( orings$damage*eta - 6*log(1 + exp(eta)) ) )
+}
+(betahat <- optim(c(10, -.1), logL, orings=orings, control=list(fnscale=-1))$par)
+```
+
+Compute standard errors of MLE
+```{r}
+ilogit <- function(x) exp(x)/(1+exp(x))
+phat <- ilogit(betahat[1] + orings$temp*betahat[2])
+I11 <- sum(6*phat*(1 - phat))
+I12 <- sum(6*orings$temp*phat*(1 - phat))
+I22 <- sum(6*orings$temp^2*phat*(1 - phat))
+Iinv <- solve(matrix(c(I11, I12, I12, I22), 2, 2))
+sqrt(Iinv[1,1])
+sqrt(Iinv[2,2])
+```
+
+Wald test statistic
+```{r}
+betahat[2]/sqrt(Iinv[2,2])
+```
+
+p-value from Wald test statistic 
+```{r}
+2*pnorm(abs(betahat[2]/sqrt(Iinv[2,2])), 0, 1, lower=FALSE)
+```
+
+
+# Likelihood Ratio test
+Compute maximum log likelihood from the full model
+```{r}
+(MaxlogL.F = logL(betahat,orings))
+```
+
+Compute maximum log likelihood from the reduced model
+```{r}
+y <- orings$damage
+n <- rep(6, length(y))
+phatN <- sum(y)/sum(n)
+(MaxlogL.R = sum(orings$damage)*log(phatN) + sum(6-orings$damage)*log(1-phatN))
+```
+
+LR test statistic
+```{r}
+(LR = -2*(MaxlogL.R - MaxlogL.F))
+```
+
+p-value from LR test statistic 
+```{r}
+pchisq(LR, df=1,lower=FALSE)
+```
+
+# Wald Test vs Likelihood Ratio test
+Square of Wald test statistic
+```{r}
+(betahat[2]/sqrt(Iinv[2,2]))^2
+```
+
+LR test statistic
+```{r}
+(LR = -2*(MaxlogL.R - MaxlogL.F))
+```
+
+# Deviance 
+
+Deviance and df for the fitted model
+```{r}
+y <- orings$damage
+n <- rep(6, length(y))
+ylogxy <- function(x, y) ifelse(y == 0, 0, y*log(x/y))
+(D <- -2*sum(ylogxy(n*phat, y) + ylogxy(n*(1-phat), n - y)))
+(df <- length(y) - length(betahat))
+pchisq(D, df,lower=FALSE)
+```
+
+Deviance and df for the fitted model using the glm command 
+```{r}
+logitmod <- glm(cbind(damage,6-damage) ~ temp, family=binomial, orings)
+deviance(logitmod)
+df.residual(logitmod)
+```
+
+Deviance and df for the null model
+```{r}
+(phatN <- sum(y)/sum(n))
+(DN <- -2*sum(ylogxy(n*phatN, y) + ylogxy(n*(1-phatN), n - y)))
+(dfN <- length(y) - 1)
+pchisq(DN, dfN,lower=FALSE)
+```
+
+Deviance and df for the null model using the glm command 
+```{r}
+logitnull <- glm(cbind(y, n - y) ~ 1, family=binomial)
+summary(logitnull)
+ilogit(-2.4463)
+```
+
+LRT using deviance
+```{r}
+DN-D
+pchisq(DN - D, dfN - df, lower=FALSE)
+```
+

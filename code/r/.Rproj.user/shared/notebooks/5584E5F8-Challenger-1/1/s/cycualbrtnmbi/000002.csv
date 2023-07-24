@@ -1,0 +1,4 @@
+"0","logL <- function(beta, orings) {"
+"0","  eta <- cbind(1, orings$temp) %*% beta"
+"0","  return( sum( orings$damage*eta - 6*log(1 + exp(eta)) ) )"
+"0","}"

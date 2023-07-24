@@ -1,0 +1,129 @@
+#question 1
+
+#a
+data(wbca)
+library(faraway)
+?wbca
+
+#b
+model <- glm(cbind(Class,1-Class) ~ ., data = wbca , family = binomial)
+
+#2 cases is fine
+#need cbind so first col is success and second is fails
+
+#c
+model0 <- step(model, scope=~.)
+
+
+#d
+newdata = list(Adhes=1, BNucl=1, Chrom=3, Mitos=1, NNucl=1, Thick=4, UShap=1) 
+a <- predict(model0, newdata, type="link", se.fit=TRUE, level=0.95)
+ta <- 2#qt(1-0.05/2, length(model0$y))
+CI <- a$fit + c(-1,1)*ta*a$se.fit
+ilogit(CI)
+
+#e
+#predited positive when it was 
+errors = sum((model0$fitted.values >= 0.5) != model0$y)
+errors
+errors/length(model0$y)
+model0$y == wbca$Class
+
+#ans
+pfit <- predict(model0, type="response") #model0$fitted.values
+#predicted positive when it was negative, over all false. false positive
+sum(pfit >= 0.5 & !wbca$Class)
+(false_neg <- sum(pfit >= 0.5 & !wbca$Class)/sum(!wbca$Class))
+#predicted negative when it was positive, over all true. false negatives
+sum(pfit < 0.5 & wbca$Class)
+(false_pos <- sum(pfit < 0.5 & wbca$Class)/sum(wbca$Class))
+
+
+sum(wbca$Class)
+sum(!wbca$Class)
+
+#f
+p = 0.9
+#false negatives
+sum(pfit < p & model0$y)
+(false_pos <- sum(pfit < p & wbca$Class)/sum(wbca$Class))
+#false positives
+sum(pfit >= p & !model0$y)
+(false_neg <- sum(pfit >= p & !wbca$Class)/sum(!wbca$Class))
+
+#sensitivity to be high: TP/ (TP + FN)
+TP = sum(pfit >= p & model0$y)
+FN = sum(pfit < p & model0$y)
+TP/ (TP + FN)
+
+#false negatives are much more dangerous than false positives
+#so want a lower
+p = 0.1
+TP = sum(pfit >= p & model0$y)
+FN = sum(pfit < p & model0$y)
+TP/ (TP + FN)
+
+
+
+
+
+#question 2
+
+data(pima)
+?pima
+
+#removing missing values
+pima["test"]
+missing <- with(pima, missing <- glucose==0 | diastolic==0 | triceps==0 | bmi == 0)
+pimac <- pima[!missing,]
+dim(pima)
+dim(pimac)
+
+#a
+m <- glm(cbind(test, 1- test) ~ ., data = pimac, family =binomial)
+#m0 <- step(m, scope = ~.)
+m0 <- m
+ci <- confint(m0)
+summary(m0)
+ci["diastolic",]
+
+#c
+
+#
+#
+#d <- data.frame(
+#  colnames = (setdiff(colnames(pimac),responseCol)),
+#  val = c(1, 99, 64, 22, 76, 27, 0.25, 25)
+#)
+#d
+#where test is the response var col both of these work
+responseCol = "test"
+data1 <- pimac[1,setdiff(colnames(pimac),responseCol)]
+data1[1,] = c(1, 99, 64, 22, 76, 27, 0.25, 25)
+
+#where test is the response var col
+data1 <- subset(pimac, select=-c(test))[1,]
+data1[1,] = c(1, 99, 64, 22, 76, 27, 0.25, 25)
+
+a <- predict(m0, data1, type="link", se.fit=TRUE, level=0.95)
+
+
+
+#question 3
+data(orings)
+logitmod <- glm(cbind(damage,6-damage) ~ temp, family=binomial, orings)
+logL <- function(beta, orings) {
+  eta <- cbind(1, orings$temp) %*% beta 
+  return( sum(orings$damage*eta - 6*log(1 + exp(eta))) 
+)}
+logLR <- function(a, b, betafit, orings) 2*logL(betafit, orings) - 2*logL(c(a, b), orings)
+a_vec <- seq(2, 22, 0.1)
+b_vec <- seq(-0.4, -0.05, .005)
+z <- matrix(0, nrow = length(a_vec), ncol = length(b_vec))
+for (i in 1:length(a_vec)) {
+  for (j in 1:length(b_vec)) {
+    z[i,j] <- logLR(a_vec[i], b_vec[j], logitmod$coefficients, orings)
+  }
+}
+contour(a_vec, b_vec, z, levels = qchisq(0.95, 2),
+        xlab="a", ylab="b", main="95% confidence region")

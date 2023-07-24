@@ -1,0 +1,41 @@
+library(zoo) # moving averages  
+
+
+#graphing coutns over days
+y = as.vector(df_total[times[4]][[1]])[(df_total["fhv"] == 1 & df_total["borough"] == 3)]
+y.hat = as.vector(out[[1]]$fitted.values)[(df_total["fhv"] == 1 & df_total["borough"] == 3)]
+y.hat2 = as.vector(out[[2]]$fitted.values)[(df_total["fhv"] == 1 & df_total["borough"] == 3)]
+
+y = zoo::rollmean(exp(exp(y)), k = 7)
+y.hat = zoo::rollmean(exp(exp(y.hat)), k = 7)
+y.hat2 = zoo::rollmean(exp(exp(y.hat2)), k = 7)
+
+for(i in list(y,y.hat,y.hat2)){
+  i = zoo::rollmean(i, k = 7)
+}
+
+
+x = 1:length(y.hat)
+
+plot(x,y,type="l",col="red")
+lines(x,y.hat,col="green")
+lines(x,y.hat2,col="blue")
+legend("top", legend=c("real values", "fitted with weeks", "fitted without weeks"),
+       col=c("red", "green","blue"), lty=1:2, cex)
+
+
+#graphing difference in counts over days
+
+plot(x,y.hat - y,type="l",col="green")
+lines(x,y.hat2 - y,col="blue")
+legend("top", legend=c("fitted with weeks", "fitted without weeks"),
+       col=c("green","blue"), lty=1:2, cex)
+
+
+
+Temperature <- airquality$Temp
+Ozone <- airquality$Ozone
+hist(Temperature)
+boxplot(Temperature, horizontal=TRUE)
+hist(Ozone)
+boxplot(Ozone, horizontal=TRUE)

@@ -1,0 +1,3 @@
+"0","x <- seq(25,85,1)"
+"0","ilogit <- function(x) exp(x)/(1+exp(x))"
+"0","lines(x, ilogit(betahat[1] + betahat[2]*x), col=""red"")"

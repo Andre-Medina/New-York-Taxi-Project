@@ -1,0 +1,120 @@
+library(survival)
+data(infert)
+?infert
+str(infert)
+
+model1 <- glm( 
+  cbind( case, 1 - case) ~ . -pooled.stratum -stratum,
+  family = binomial, 
+  data = infert)
+  
+
+
+summary(model1)
+
+
+
+
+#testing sig levle of education
+
+#remove education
+modeln <- glm( 
+  cbind( case, 1 - case) ~ . -pooled.stratum -stratum -education,
+  family = binomial, 
+  data = infert)
+
+
+#modeln <- glm( 
+#  cbind( case, 1 - case) ~ 1,
+#  family = binomial, 
+#  data = infert)
+
+
+#compare deviance and df
+dev <- modeln$deviance - model1$deviance
+n <- modeln$df.residual - model1$df.residual
+
+#chisq test
+pchisq(dev, n, lower.tail = FALSE)
+
+anova(model1, modeln)
+
+
+
+
+
+
+#questions 3
+data("discoveries")
+?discoveries
+
+start = 1860
+finish = 1959
+
+#transforming the data
+dis <- discoveries[1:(finish - start + 1)]
+yer <- seq(start, finish)
+data <- matrix(c(yer,dis), nrow = (finish - start + 1), ncol = 2)
+
+
+#with just year
+model1 <- glm( 
+  dis ~ yer,
+  family = poisson(link = "log")
+)
+
+
+summary(model1)
+
+
+#modle with year and year^2
+model2 <- glm( 
+  dis ~ yer + I(yer^2),
+  family = poisson(link = "log"),
+  trace = 0
+  )
+
+summary(model2)
+
+
+#CODE FROM SOLUTIONS TO GRAPH
+x <- disc.df$year
+plot(x, disc.df$disc)
+beta1 <- model1$coefficients
+lines(x, exp(beta1[1] + beta1[2]*x), col="blue", lty=2)
+beta2 <- model2$coefficients
+lines(x, exp(beta2[1] + beta2[2]*x + beta2[3]*x^2), col="red")
+#END OF GRAPHING CODE
+
+
+
+
+#null model
+modeln <- glm( 
+  dis ~ 1,
+  family = poisson(link = "log"),
+  trace = 0
+  
+)
+
+#compare deviance and df
+anova(modeln, model1, model2)
+
+#chisq tests
+
+#year to year^2
+(dev <- model1$deviance - model2$deviance )
+n <- model1$df.residual - model2$df.residual
+pchisq(dev, n, lower.tail = FALSE)
+
+#year to null
+(dev <- modeln$deviance - model1$deviance)
+n <- modeln$df.residual - model1$df.residual
+pchisq(dev, n, lower.tail = FALSE)
+
+#year^2 to null
+(dev <- modeln$deviance - model2$deviance)
+n <- modeln$df.residual - model2$df.residual
+pchisq(dev, n, lower.tail = FALSE)
+
+

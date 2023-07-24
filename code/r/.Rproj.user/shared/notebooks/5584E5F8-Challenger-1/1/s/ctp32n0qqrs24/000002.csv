@@ -1,0 +1,7 @@
+"0","try <- function(a, b, col = ""red"") {"
+"0","  t <- seq(25, 85, 1)"
+"0","  p <- 1/(1 + exp(-a - b*t))"
+"0","  lines(t, p, col = col)"
+"0","}"
+"0","plot(damage/6 ~ temp, orings, xlim=c(25,85), ylim=c(0,1),"
+"0","     xlab=""Temperature"", ylab=""Prob of damage"")"

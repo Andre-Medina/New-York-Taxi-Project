@@ -1,0 +1,195 @@
+#question 2
+n = 7
+k = 3
+x_in = c(32,19.5,13.3,13.3,5,7.1,34.5,84.9,306.6,562,562,390.6,2175,623.5,10,9,5,5,5,3,7)
+x <- matrix(c(rep(c(1),n),x_in),n,k+1)
+x
+y <- matrix(c(37.9,42.2,47.3,43.1,54.8,47.1,40.3),7)
+y <- y*1000
+y
+b <- solve(t(x)%*%x, t(x)%*%y)
+b
+SSres <- t(y-x%*%b)%*%(y-x%*%b)
+sigma =  sqrt(SSres/(n))
+s = sqrt(SSres/(n-(k+1)))
+s
+summary(lm(y ~x))
+lm(y~x)
+help(lm)
+
+sstot = t(y)%*%y
+sstot
+ssreg = sstot - SSres
+ssreg
+ssres = SSres
+ssres
+sstot
+ssreg
+summary(lm(y~x))
+anova(lm(y~x))
+
+
+a <- 1-(ssres/ssreg)
+sqrt(a)
+a^2
+
+s*sqrt(solve(t(x)%*%x)[4,4])
+
+n
+p
+2*pt(7.655,3,lower.tail = FALSE)
+2*pt(6.734, 136, lower.tail = FALSE)
+pf(7.655^2,1,3,lower.tail = FALSE)
+
+pt(1,1)
+
+alpha <- 0.05
+ta <- qt(1-alpha/2, df = n - (k+1))
+ta
+b[1] + c(-1,1)*ta*s*sqrt(solve(t(x)%*%x)[1,1])
+b[2] + c(-1,1)*ta*s*sqrt(solve(t(x)%*%x)[2,2])
+b[3] + c(-1,1)*ta*s*sqrt(solve(t(x)%*%x)[3,3])
+b[4] + c(-1,1)*ta*s*sqrt(solve(t(x)%*%x)[4,4])
+confint(lm(y~x))
+
+
+#2b
+x_new <- c(1,10,100,6)
+alpha <- 0.10
+ta <- qt(1-alpha/2, df = n - (k+1))
+x_new%*%b + c(-1,1)*ta*s*sqrt(t(x_new)%*% solve(t(x)%*%x) %*%x_new)
+
+b 
+
+#2c
+(solve(t(x)%*%x)%*%t(x))%*%t((solve(t(x)%*%x)%*%t(x)))
+
+
+#2d
+
+c=qf(.95,1,3)
+dst = -1000
+r = 1
+p = 4
+C = matrix(c(0,1,0,0),p,r)
+del = (t(C)%*%b - dst)
+val = (del)%*%solve(t(C)%*%solve(t(x)%*%x)%*%C)%*%(del)/(SSres/(n-p))
+val
+
+#2e
+#corrected sum of squares
+x2 <- matrix(x_in,n,k)
+b2 <- solve(t(x2)%*%x2, t(x2)%*%y)
+SStot <- t(y)%*%y
+SSres2 <- t(y-x2%*%b2)%*%(y-x2%*%b2)
+SStot2 <- SStot - ((sum(y))^2)/n #-SSres
+SSreg2 <- SStot2-SSres2
+SSreg <- SStot - SSres
+SSreg - ((sum(y))^2)/n
+
+
+SSres2
+k + 1
+SSres
+k
+SSres2 - SSres
+1
+f <- ((SSres2 - SSres)/1)/(SSres/k)
+f
+1-pf(f,1,k)
+
+
+
+x
+model <- lm(y~x)
+modelsos <- lm(y~ 0 + x[,-1])
+summary(model)
+anova(modelsos, model)
+
+SSreg2 <- t(y)%*%x2%*%b2 - ((sum(y))^2)/n
+
+
+
+#q5c
+n - (k+1)
+x.sc <- scale(x[,-1], center=T, scale=T)
+y.sc <- scale(y, center=T, scale=T)
+p<-3
+lambda <- seq(0,100,0.01)
+
+AIC = c();
+i = 1
+lowest_lambda = 0
+lowest_AIC = 0
+for(i in lambda){
+  h = solve(t(x.sc)%*%x.sc + i*diag(p))%*%t(x.sc)
+  b = h%*%y.sc
+  SSres = t(y.sc-x.sc%*%b)%*%(y.sc-x.sc%*%b)
+  df <- sum(diag(x.sc%*%h))
+  temp <-n*log(SSres/n) + 2*df
+  AIC = c(AIC,temp)
+  if(i == 0){
+    lowest_AIC = temp
+    lowest_lambda = i
+  }else if(temp < lowest_AIC){
+    lowest_AIC = temp
+    lowest_lambda = i
+  }
+}
+AIC 
+plot(lambda, AIC, ylim = c(-10,10))
+lowest_AIC
+lowest_lambda
+
+
+
+
+
+====
+
+
+
+#q 4
+
+#a
+data(mtcars)
+mtcars = log(mtcars[, c(1,3:7)])
+pairs(mtcars)
+
+#b
+#y <- mtcars[,1]
+#x <- mtcars[,-1]
+#forward
+lm(mpg ~ disp + hp + drat + wt + qsec, mtcars)
+str(mtcars)
+basemodel <- lm(mpg ~ 1, mtcars)
+add1(basemodel, scope = ~ . + disp + hp + drat + wt + qsec, test = "F")
+#smallest was disp
+model2 <- lm(mpg ~ disp, mtcars)
+add1(model2, scope = ~ . + hp + drat + wt + qsec, test = "F")
+#smallest is wt
+model3 <- lm(mpg ~ disp + wt, mtcars)
+add1(model3, scope = ~ . + hp + drat  + qsec, test = "F")
+#smallest is hp
+model4 <- lm(mpg ~ disp + hp + wt, mtcars)
+add1(model4, scope = ~ . + drat  + qsec, test = "F")
+#no more significance
+forwardSelection <- lm(mpg ~ disp + hp + wt, mtcars)
+
+#c
+#stepwise
+basemodel <- lm(mpg ~ 1, mtcars)
+stepwiseSelection <- step(basemodel, scope = ~.+disp + hp + drat + wt + qsec, steps = 100)
+
+#d
+summary(stepwiseSelection)
+#e
+par(mfrow=c(2,2))
+plot(stepwiseSelection, which = 1)
+plot(stepwiseSelection, which = 2)
+plot(stepwiseSelection, which = 3)
+plot(stepwiseSelection, which = 5)
+
+
+
+

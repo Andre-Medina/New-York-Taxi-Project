@@ -1,0 +1,6 @@
+"0","(betahat <- optim(c(10, -.1), logL, orings=orings, control=list(fnscale=-1))$par)"
+"1","[1]"
+"1"," 11.6671414"
+"1"," -0.2162982"
+"1","
+"

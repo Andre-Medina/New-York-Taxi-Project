@@ -1,0 +1,72 @@
+#question 1
+
+
+#question 2
+library(faraway)
+
+data(pima)
+?pima
+
+missing <- with(pima, missing <- glucose==0 | diastolic==0 | triceps==0 | bmi == 0)
+pima_subset = pima[!missing, c(6,9)]
+str(pima_subset)
+
+
+
+
+m
+
+m
+
+#
+logL <- function(beta, pima_subset) {
+  eta <- cbind(1, pima_subset$bmi) %*% beta
+  return( sum( pima_subset$test*eta - log(1 + exp(eta)) ) )
+}
+
+(beta.hat <- optim(c(-10, 1), 
+                  logL, 
+                  pima_subset=pima_subset, 
+                  control=list(fnscale=-1))$par)
+
+ilogit <- function(x) exp(x)/(1+exp(x))
+
+t = c(0, 7)
+
+
+phat <- ilogit(beta.hat[1] + pima_subset$bmi*beta.hat[2])
+I11 <- sum(phat*(1 - phat))
+I12 <- sum(pima_subset$bmi*phat*(1 - phat))
+I22 <- sum(pima_subset$bmi^2*phat*(1 - phat))
+Iinv <- solve(matrix(c(I11, I12, I12, I22), 2, 2))
+sqrt(Iinv[1,1])
+sqrt(Iinv[2,2])
+
+n <- dim(pima_subset)[1]
+
+se <- sqrt( t %*% Iinv %*% t)
+(eta.hat <- t %*% beta.hat)
+k <- qt(1-(1-.95)/2,532)
+
+eta.hat
+
+beta.hat
+
+eta.est <- eta.hat + c(-1, 1) * k * se
+eta.est
+
+
+
+ilogit(eta.est)
+log(eta.est)
+exp(eta.est)
+
+goal <- c(.488, .9077)
+
+
+ilogit (t %*% betahat)
+
+logitmod <- glm(cbind(test, 1- test) ~ bmi, data = pima_subset, family = binomial)
+summary(logitmod)
+
+predict(logitmod, newdata=list(bmi=7), type="response")

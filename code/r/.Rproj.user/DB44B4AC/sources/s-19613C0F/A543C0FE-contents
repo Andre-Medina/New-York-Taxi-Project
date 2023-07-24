@@ -1,0 +1,265 @@
+ library(MASS)
+
+y1 = c(22, 23, 24, 22, 26)
+y2 = c(16, 18, 19)
+y3 = c(28, 27, 29, 29)
+
+y = matrix(c(y1,y2,y3),length(y1) + length(y2) + length(y3))
+
+k = 3
+n = length(y)
+
+x <- matrix(c(rep(1,n),rep(0,k*n)),n,k+1)
+x[(1):(length(y1)),2]<-1
+x[(1+length(y1)):(length(y1) +length(y2)),3]<-1
+x[(1+length(y1) + length(y2)):(n),4]<-1
+
+
+
+#1
+
+xtx <- t(x)%*%x
+m <- xtx[2:4,2:4]
+invmt <- t(solve(m))
+xtxc <- matrix(0,4,4)
+xtxc[2:4,2:4] <- invmt
+xtxc  
+
+#2
+b=xtxc%*%t(x)%*%y
+e <- y - x%*%b
+ssres <- t(e)%*%e
+s2 <- ssres/(n-k)
+sqrt(s2)
+
+#3
+t <- c(1,2,1,0)
+t(t)%*%xtxc%*%xtx
+
+#4
+t <- c(1,0,1,0)
+t(t)%*%xtxc%*%xtx
+alpha <- 1 - .9
+ta <- qt(1-alpha/2,k)
+t(t)%*%b + c(-1,1)*ta*sqrt(s2*t(t)%*%xtxc%*%t)
+
+
+#5
+t <- c(0,1,0,-1)
+t(t)%*%xtxc%*%xtx
+2*pt(abs(t(t)%*%b/sqrt(s2*t(t)%*%xtxc%*%t)),k,lower.tail = F)
+
+
+#q 4
+setwd("C:/Users/andre/Dropbox/2021/uni/New folder/ass 3")
+mile <- read.csv("mile.csv")
+mile$Gender <- factor(mile$Gender)
+contrasts(mile$Gender) <- contr.sum(2)
+milef <- mile[mile$Gender == "Female",]
+milem <- mile[mile$Gender == "Male",]
+
+fmodel <- lm(Time ~ Year, milef)
+mmodel <- lm(Time ~ Year, milem)
+
+y <- mile$Time
+n <- length(mile[[1]])
+x <- matrix(0, n, 6)
+x[,1] <- 1
+x[mile$Gender == "Male",2] <- 1
+x[mile$Gender == "Male",5] <- mile[mile$Gender == "Male",]$Year
+x[mile$Gender == "Female",3] <- 1
+x[mile$Gender == "Female",6] <- mile[mile$Gender == "Female",]$Year
+x[,4] <- mile$Year
+x
+
+
+xtx <- t(x)%*%x
+xtxc <- matrix(0,6,6)
+xtxc[c(2:3,5:6),c(2:3,5:6)] <- solve(xtx[c(2:3,5:6),c(2:3,5:6)])
+##xtxc <- ginv(xtx)
+b=xtxc%*%t(x)%*%y
+
+cm <- c(1,1,0,0,0,0)%*%b 
+mm <- c(0,0,0,1,1,0)%*%b 
+cf <- c(1,0,1,0,0,0)%*%b 
+mf <- c(0,0,0,1,0,1)%*%b 
+c(cm,mm)
+mmodel
+c(cf,mf)
+fmodel
+
+summary(lm(Time ~ Year * Gender, mile))
+
+mile
+
+summary(model)
+(ssres <- t(y-x%*%b)%*%(y-x%*%b))
+(ssreg <- t(y)%*%x%*%b)
+(sstot <- t(y)%*%y)
+model2 <- lm(Time ~ Year, mile)
+anova(model,model2)
+
+summary(mmodel)
+
+pf(174.456,2,20,lower.tail = F)
+
+#independent models are the same as the subfactor models
+
+
+#a
+plot(mile$Year, mile$Time, pch=array(mile$Gender), col=mile$Gender)
+
+#b
+imodel <- lm(Time ~ Year * Gender, mile)
+model <- lm(Time ~ Year + Gender, mile)
+anova(model, imodel)
+anova(imodel, model)
+
+
+
+summary(imodel)
+
+
+#very low therefore interaction exists
+imodel$coefficients
+
+#c
+fmodel <- lm(Time ~ Year, milef)
+mmodel <- lm(Time ~ Year, milem)
+
+abline(fmodel)
+abline(mmodel)
+
+#d
+
+a <- coef(fmodel)-coef(mmodel)
+x1=-a[[1]]/a[[2]]
+y1=coef(fmodel)[[2]]*x1 + coef(fmodel)[[1]]
+c(x1,y1 )
+
+#e
+t <- c(0,1,1,0,0,0)
+t1 <- c(1,1,0,0,0,0) - c(1,0,1,0,0,0)
+t1
+t(t1)%*%xtxc%*%xtx
+t2 <- c(0,0,0,1,0,1) - c(0,0,0,1,1,0)
+t2
+t(t2)%*%xtxc%*%xtx
+t/t?
+
+
+#f
+library(gmodels)
+t <- c(0,0,0,0,1,-1)
+t(t)%*%xtxc%*%xtx
+ci<-estimable(imodel,c(0,0,0,1), conf.int = 0.95)
+ci$Upper
+ci$Lower
+confint(imodel,level=0.95)
+
+#g
+confint(mmodel, level = 0.95)
+#between -.387 and -.345, so no -.4
+t <- mmodel$coefficients[[2]]
+df<-mmodel$df.residual
+ssres <- sum((mmodel$residuals)^2)
+s2 <- ssres/df
+
+
+
+#5
+n <- c(16, 12, 12)
+nsum <- sum(n)
+x <- sample(nsum, nsum)
+(j1 <- x[1:n[1]])
+(j2 <- x[n[1]+(1:n[2])])
+(j3 <- x[(n[1]+n[2] + 1):nsum])
+
+
+xtxc <- matrix(c(1.62861066, -0.0377838755, -0.0250403183, -0.03778388, 
+                 0.0019656212, 0.0004383807, -0.02504032, 0.0004383807, 0.0004105962), 3,3)
+xty <- c(3543.93,25957.51,188520.36)
+yty <- 251277.1
+ssreg <- xty%*%xtxc%*%xty
+ssres <- yty - ssreg
+n<- 50
+p <- 2 + 1
+
+Fstat <- (ssreg - xty[-3]%*%b[-3])/(ssres/(n-p)) 
+b<-xtxc%*%xty
+
+
+
+
+
+ix <- matrix(c(rep(1,4),1,1,0,0,0,0,1,1,1,0,1,0,0,1,0,1,
+               1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1),4,9)
+x <- matrix(c(rep(1,4),1,1,0,0,0,0,1,1,1,0,1,0,0,1,0,1),4,5)
+y <- c(1.2,12,120,1200)
+xd <- data.frame(output = y, factor1 = c("low","low","high","high"), factor2 = c("small","big","small","big"))
+xd
+xd$factor1 <- factor(xd$factor1)
+xd$factor2 <- factor(xd$factor2)
+#contrasts(xd$factor1) <- contr.sum(2)
+#contrasts(xd$factor2) <- contr.sum(2)
+#contrasts(xd$factor1) <- contr.treatment(2)
+#contrasts(xd$factor2) <- contr.treatment(2)
+xd
+imodel <- lm(output ~ factor1 * factor2, xd)
+model <-  lm(output ~ factor1 + factor2, xd)
+
+
+
+
+xtx <- t(x)%*%x
+#xtxc <- matrix(0,5,5)
+#xtxc[c(3:5),c(3:5)] <- solve(xtx[c(3:5),c(3:5)])
+xtxc <- ginv(xtx)
+b=xtxc%*%t(x)%*%y
+#treatment on 2
+c(1,0,1,0,1)%*%xtxc%*%xtx
+c(1,0,1,0,1)%*%b
+c(0,1,-1,0,0)%*%b
+c(0,0,0,1,-1)%*%b
+summary(model)
+
+#sum on 1
+c(1,.5,.5,.5,.5)%*%b
+c(0,-.5,.5,0,0)%*%b
+c(0,0,0,-.5,.5)%*%b
+
+
+#with intercation
+ix
+ixtx <- t(ix)%*%ix
+ixtxc <- matrix(0,9,9)
+ixtxc[c(6:9),c(6:9)] <- solve(ixtx[c(6:9),c(6:9)])
+ixtxc <- ginv(ixtx)
+ib=ixtxc%*%t(ix)%*%y
+ib
+
+#treatment on 2
+c(1,0,1,0,1,0,0,0,1)%*%ib
+c(0,1,-1,0,0,0,1,0,-1)%*%ib
+c(0,0,0,1,-1,0,0,1,-1)%*%ib
+c(0,0,0,0,0,1,-1,-1,1)%*%ib
+summary(imodel)
+
+ib
+#sum on 1
+c(1,.5,.5,.5,.5,1/4,1/4,1/4,1/4)%*%ib
+c(0,-.5,.5,0,0,-1/4,-1/4,1/4,1/4)%*%ib
+c(0,0,0,-.5,.5,-1/4,1/4,-1/4,1/4)%*%ib
+c(0,0,0,0,0,1/4,-1/4,-1/4,1/4)%*%ib
+
+
+b
+
+xi
+xd
+x
+xi
+y <- matrix(c(25,30,35,40),4,1)
+lm(y ~ x)
+
+
